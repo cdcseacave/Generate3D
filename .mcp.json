@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "blender": {
+      "command": "/Users/dancostin/Documents/Codex/integrations/blender-lab-mcp/.venv/bin/blender-mcp",
+      "args": [],
+      "env": {
+        "BLENDER_MCP_PORT": "9876",
+        "BLENDER_PATH": "/Applications/Blender.app/Contents/MacOS/Blender"
+      }
+    }
+  }
+}

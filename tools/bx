@@ -1,0 +1,6 @@
+#!/bin/zsh
+# Shortcut: talk to the headless Blender (port 9877) through the MCP server.
+#   tools/bx tools | tools/bx exec file.py | tools/bx code '...'
+VENV="/Users/dancostin/Documents/Codex/integrations/blender-lab-mcp/.venv"
+export BLENDER_MCP_PORT="${BLENDER_MCP_PORT:-9877}"
+exec "$VENV/bin/python" "$(dirname "$0")/bmcp.py" "$@"

@@ -1,0 +1,19 @@
+# Downloaded third-party assets (2 GB). Poly Haven models/textures/HDRIs come back with
+# `python3 tools/fetch_assets.py`; assets/demo (Blender demo scenes) and assets/backdrops
+# (Poly Haven tonemapped panoramas) were fetched by hand - see "Asset sources" in PLAN.md.
+assets/
+# Regenerable render intermediates and logs
+out/raw/
+logs/
+# First build, superseded by out/
+output/
+# Scratch: test photos from Wikimedia Commons (their own licences) and throwaway state
+scratch/real/
+scratch/realsel/
+scratch/*.json
+scratch/*.png
+# Noise
+__pycache__/
+*.pyc
+*.blend1
+.DS_Store
