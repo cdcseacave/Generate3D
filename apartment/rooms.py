@@ -9,6 +9,9 @@ from . import fixtures as X
 from . import props as P
 from . import shell as S
 from . import wear as W
+from . import mitsuba as MI
+from . import gso as G
+from mathutils import Vector
 
 R = C.rng
 PI = math.pi
@@ -37,6 +40,11 @@ def ph(aid, x, y, z=0.0, rot=0.0, **kw):
 def on(aid, x, y, zf=1.5, rot=None, **kw):
     """Drop a Poly Haven prop onto whatever surface is below (x, y, zf)."""
     return ph(aid, x, y, Z(x, y, zf), R.uniform(0, 6.28) if rot is None else rot, **kw)
+
+
+def sc(name, x, y, zf=1.5, rot=None, **kw):
+    """Set a photo-scanned object (apartment/gso.py) on whatever surface is below (x, y, zf)."""
+    return G.put(name, x, y, Z(x, y, zf), R.uniform(0, 6.28) if rot is None else rot, **kw)
 
 
 def fruit_bowl(x, y, zf=1.5, bananas=None):
@@ -119,7 +127,7 @@ def switches(M):
     sw("Sw_Bath", "x", S.YH1 - S.TI / 2 - 0.004, 7.82, -1, M)
     for name, axis, face, a, sgn in (("So_Liv1", "y", 0.154, 3.75, 1), ("So_Liv2", "y", S.XLK - 0.064, 0.45, -1),
                                      ("So_Kit", "y", S.XLK + 0.064, 1.6, 1), ("So_Hall", "x", S.YH0 + 0.064, 6.2, 1),
-                                     ("So_Bed", "y", 0.154, 6.9, 1), ("So_Off", "y", S.XOB - 0.064, 9.75, -1)):
+                                     ("So_Bed", "y", 0.154, 7.63, 1), ("So_Off", "y", S.XOB - 0.064, 9.75, -1)):
         sw(name, axis, face, a, sgn, M, z=0.3, socket=True, double=True)
     sw("Sw_HallOffice", "x", S.YH1 - S.TI / 2 - 0.004, 6.08, -1, M)
     sw("Sw_HallBed", "x", S.YH1 - S.TI / 2 - 0.004, 3.68, -1, M)
@@ -178,7 +186,7 @@ def living(M):
     zt = Z(2.1, 2.2, 1.0)
     P.remote((2.05, 1.85, zt), 0.4)
     P.remote((2.13, 1.92, zt), 0.9)
-    P.mug((2.2, 2.45, zt), "#3d6a73")
+    G.put("mug_red", 2.2, 2.45, zt, 2.4, rough=0.14)
     P.book_stack((2.05, 2.2, zt), 2, 0.2)
     X.sippy_cup((2.22, 1.72, zt))
     P.candle((2.18, 2.08, zt), 0.07, 0.035)
@@ -199,15 +207,20 @@ def living(M):
     zt = Z(3.75, 3.92, 1.0)
     P.table_lamp((3.8, 4.0, zt), on=False)
     # play corner
-    P.blocks((5.0, 2.55, 0.012), n=11, spread=0.33)
-    P.stack_rings((4.72, 3.0, 0.012))
+    G.put("duplo", 5.0, 2.55, 0.012, 0.5, rough=0.3)         # what got built this morning
+    G.put("abc", 5.42, 2.1, 0.012, 2.0, rough=0.6)
+    G.put("truck", 4.72, 2.9, 0.012, 1.2, rough=0.35)
+    G.put("dino", 5.28, 3.0, 0.012, 4.0, rough=0.45)
+    G.put("teddy", 4.25, 3.3, 0.0, 0.7, rough=0.95, spec=0.2)
+    P.stack_rings((4.72, 3.2, 0.012))
     ph("football", 4.55, 1.8, rot=1.1, part="inflated")
     P.picture_book((5.35, 3.3, 0.0), 0.5, 2)
     P.picture_book((4.6, 2.3, 0.012), 2.1, 3)
     zk = 0.46
     P.drawing((5.0, 4.02, zk + 0.001), 1, rot=0.25)
     P.crayons((5.12, 3.93, zk), 7, 0.07)
-    P.mug((4.82, 4.12, zk), "#f2b81f", full=False)
+    G.put("mug_yellow", 4.8, 4.14, zk, 3.6, rough=0.14)
+    G.put("crayon_box", 5.2, 4.1, zk, 0.4, rough=0.55)
     # toy basket
     C.basin("ToyBin", (0.44, 0.36, 0.26), (4.62, 3.55, 0), P.FAB("rough_linen", "#b9a98c", size=0.2), wall=0.012,
             bevel=0.03, rot=0.3)
@@ -220,7 +233,8 @@ def living(M):
         (0.0, lambda x, y, z: ph("potted_plant_04", x, y + 0.2, z, scale=1.6)),
         (0.62, lambda x, y, z: ph("ceramic_vase_01", x, y, z)),
         (0.8, lambda x, y, z: None),
-        (0.45, lambda x, y, z: games(x - 0.02, y + 0.12, z, 3, PI / 2)),
+        (0.45, lambda x, y, z: (G.put("monopoly", x - 0.02, y + 0.1, z, PI / 2, rough=0.5, pre=(PI / 2, 0, 0)),
+                                G.put("puzzle", x - 0.01, y + 0.11, z + 0.06, PI / 2 + 0.12, rough=0.6))),
         (0.0, lambda x, y, z: (basket(x, y - 0.02, z, 0.32, 0.26, rot=0.2),
                                storage_box(x, y + 0.42, z, "#b9a98c", rot=PI / 2))),
     ])
@@ -248,130 +262,96 @@ def living(M):
 
 
 # =============================================================== KITCHEN ===
+def under(x, y, z0=1.15, zmax=2.0):
+    """Height of the first surface above (x, y, z0) - the underside of a wall cupboard - or None."""
+    hit, loc, _n, _i, _o, _m = bpy.context.scene.ray_cast(_DG[0], (x, y, z0), (0, 0, 1))
+    return loc.z if hit and loc.z < zmax else None
+
+
 def kitchen(M):
+    """Fitted kitchen from 'Country Kitchen' by Jay-Artist (CC-BY): cupboard run with range cooker,
+    hood and microwave on the east wall, an island, and a table with four chairs by the window.
+    Scaled 0.92 so the 4.75 m run fits the 4.39 m wall, which also brings its tall worktop to 0.92 m."""
     C.collection("Kitchen")
     x0, y0, x1, y1 = S.inner("kitchen")
-    tiles = C.wall_tile("KitchenBacksplash", 0.6, 0.3, color="#efece4", color2="#e8e4da", rough=0.18)
-    wS = S._wall_at("x", 0.0)
-    C.boxes("Backsplash", S.strip_items("x", y0 + 0.004, y0 + 0.012, x0, x1, 0.9, 1.45, wS.openings)
-            + S.strip_items("y", x1 - 0.004, x1 - 0.012, y0, 3.02, 0.9, 1.45, []), tiles)
-    X.base_run("KitchenBaseSouth", [(0.62, "blind"), (0.7, "drawers"), (0.8, "door"), (0.6, "dishwasher"), (0.87, "door")],
-               (x1, y0, 0), PI, sink=1.72)
-    X.base_run("KitchenBaseEast", [(0.45, "door"), (0.6, "oven"), (0.6, "drawers"), (0.6, "door")], (x1, 3.0, 0), -PI / 2)
-    X.upper_run("KitchenUpperSouth", [(0.9, "door"), (1.75, "gap"), (0.94, "door")], (x1, y0, 0), PI)
-    X.upper_run("KitchenUpperEast", [(0.45, "open"), (0.6, "hood"), (1.46, "door")], (x1, 3.0, 0), -PI / 2)
-    X.cooktop((x1 - 0.31, 2.25, 0.9), -PI / 2)
-    X.fridge((x1, 3.37, 0), -PI / 2)
-    for i, p in enumerate(((9.4, 0.42, 1.43), (6.75, 0.42, 1.43), (9.6, 1.1, 1.43))):
-        C.light("UnderCabinet{}".format(i), p, 2.2, "#fff1d6", radius=0.04)
+    k = 0.92
+    kit, parts = MI.kit("kitchen", "CountryKitchen",
+                        drop=r"^(Walls|Floor|Ceiling|Window|Skirting|Blind|Lamp|Bulb|CeilingLight|Home|Carrots|Mushroom|SlicedMushroms|Pepper|Tomatoes|Chopping|Book|LeftPage)",
+                        scale=k, rot=PI, loc=(x1 - 2.49 * k, y0 + 2.47 * k, 0.02 * k))
+    X.fridge((x0, 4.1, 0), PI / 2)
     X.roller_blind("KitchenBlind", "x", y0 - 0.1, 1, 7.36, 8.84, 2.28, 0.35)
-    P.towel_hanging((x1 - 0.625, 2.3, 0.72), "W", 0.26, 0.34, 0.24, "#c9b79c", tex="cotton_jersey")      # tea towel on the oven handle
-    # dining
-    din, _dsz, _dobjs = C.demo("flat-archiviz.blend", collection="Dinner", exclude=r"^Watch", name="DiningSet")
-    din.location = (7.5, 2.75, 0)
-    din.rotation_euler = (0, 0, PI / 2)
-    # Nobody leaves six chairs squared up: one pushed back where someone got up, the rest a little off.
-    from mathutils import Matrix, Vector
-    bpy.context.view_layer.update()
-    moves = [(0.04, 0.08), (0.3, 0.45), (0.0, -0.05), (0.13, -0.2), (0.02, 0.04), (0.2, 0.28)]
-    for (pull, turn), ch in zip(moves, sorted((o for o in din.children if o.name.startswith("Chair")), key=lambda o: o.name)):
-        pts = [k.matrix_world @ Vector(c) for k in ch.children_recursive if k.type == "MESH" for c in k.bound_box]
-        if not pts:
-            continue
-        cx = sum(q.x for q in pts) / len(pts)
-        cy = sum(q.y for q in pts) / len(pts)
-        d = Vector((cx - 7.5, cy - 2.75, 0.0))
-        d = Vector((math.copysign(1.0, d.x), 0, 0)) if abs(d.x) > abs(d.y) * 0.6 else Vector((0, math.copysign(1.0, d.y), 0))
-        c = Vector((cx, cy, 0.0))
-        ch.matrix_world = Matrix.Translation(c + d * pull) @ Matrix.Rotation(turn, 4, "Z") @ Matrix.Translation(-c) @ ch.matrix_world
-    bpy.context.view_layer.update()
-    P.pendant((7.5, 2.75, S.H), drop=1.0, power=25, color="#c9a45c", on=False)
-    P.ceiling_dome((8.3, 1.9, S.H), power=28, on=False)
-    # worktop sockets with the small appliances plugged in
-    S.switch("So_KitWorktopA", "x", y0 + 0.012, 6.78, 1, M, z=1.13, socket=True, double=True)
-    S.switch("So_KitWorktopB", "y", x1 - 0.012, 2.76, -1, M, z=1.13, socket=True, double=True)
-    for i, (px_, src) in enumerate(((6.74, (6.62, 0.36, 0.93)), (6.82, (7.0, 0.3, 0.95)))):
-        C.box("Plug", (0.036, 0.03, 0.036), (px_, y0 + 0.012 + 0.015, 1.112), P.PL("#f4f4f2", 0.3), bevel=0.006)
-        P.cable([(px_, y0 + 0.04, 1.11), (px_ + 0.01, y0 + 0.07, 0.96), ((px_ + src[0]) / 2, y0 + 0.1, 0.905), src], 0.003, "#e9e9e6")
-    P.bin_round((6.48, 4.25, 0), 0.14, 0.42)
-    # walls
-    ph("wall_clock", 9.1, y1 - 0.03, 1.95, rot=F["S"])
-    P.frame((x0 + 0.004, 2.9, 1.55), "E", 0.5, 0.4, i=4, color="#b89a6a")
+    tx, ty = 7.44, 0.97                                   # their table, after the move
+    P.pendant((tx, ty, S.H), drop=1.0, power=25, color="#c9a45c", on=False)
+    P.ceiling_dome((8.3, 2.6, S.H), power=28, on=False)
+    P.bin_round((6.45, 3.4, 0), 0.14, 0.42)
+    ph("wall_clock", 8.9, y1 - 0.03, 1.95, rot=F["S"])
+    P.frame((x0 + 0.004, 2.4, 1.55), "E", 0.5, 0.4, i=4, color="#b89a6a")
     refresh()
 
-    zc = 0.9
-    # south counter (west of sink)
-    X.toaster((6.62, 0.5, zc), 0.1)
-    X.coffee_maker((7.0, 0.45, zc), F["N"])
-    P.mug((6.86, 0.6, zc), "#e8e4da", full=False)
-    X.paper_towel((9.14, 0.3, zc))
-    X.dish_rack((7.45, 0.47, zc), 0.0)
-    P.bottle((7.82, 0.28, zc), 0.19, 0.03, "#7bc47f", "#ffffff", pump=True, clear=True, name="DishSoap")
-    C.soft_box("Sponge", (0.1, 0.065, 0.03), (8.42, 0.3, zc), P.PL("#f1d13a", 0.9), rot=0.3, round_=0.008, cuts=2)
-    # east of sink
-    on("wooden_cutting_board", 8.85, 0.5, 1.2, rot=0.15)
+    # a sink let into the free worktop at the north end of the run (the scene has none)
+    sx, sy = x1 - 0.4, 4.08
+    zc = Z(sx, sy, 1.3)
+    cut = C.box("SinkCut", (0.5, 0.42, 0.5), (sx, sy, zc - 0.3), None)
+    cut.hide_render = True
+    cut.display_type = "WIRE"
+    for o in parts.get("Worktops", []) + parts.get("CupboardUnits", []):
+        pts = [o.matrix_world @ Vector(c) for c in o.bound_box]
+        if (min(q.x for q in pts) < sx + 0.25 and max(q.x for q in pts) > sx - 0.25 and min(q.y for q in pts) < sy + 0.21
+                and max(q.y for q in pts) > sy - 0.21 and max(q.z for q in pts) > zc - 0.25):
+            md = o.modifiers.new("SinkCut", "BOOLEAN")
+            md.operation = "DIFFERENCE"
+            md.object = cut
+    st, ch = P.METAL("steel"), P.METAL("chrome")
+    C.basin("KitchenSink", (0.5, 0.42, 0.2), (sx, sy, zc - 0.197), st, wall=0.012, bevel=0.012)
+    C.cyl("SinkDrain", 0.028, 0.004, (sx, sy, zc - 0.184), P.METAL("black"), segs=20)
+    C.cyl("TapBase", 0.024, 0.045, (x1 - 0.1, sy, zc), ch, segs=24, bevel=0.004)
+    C.pipe("Tap", [(x1 - 0.1, sy, zc + 0.012), (x1 - 0.1, sy, zc + 0.3), (x1 - 0.15, sy, zc + 0.39), (x1 - 0.24, sy, zc + 0.38),
+                   (x1 - 0.27, sy, zc + 0.3)], 0.011, ch)
+    C.box("TapLever", (0.012, 0.012, 0.09), (x1 - 0.1, sy + 0.035, zc + 0.03), ch, bevel=0.004)
     refresh()
-    on("hamburger_buns", 8.8, 0.52, 1.2, part="_01$")
-    on("hamburger_buns", 8.93, 0.47, 1.2, part="_02$")
-    C.box("Knife", (0.2, 0.022, 0.003), (8.87, 0.38, zc + 0.04), P.METAL("steel"), rot=0.25)
-    P.mug((8.45, 0.58, zc), "#e8e4da")
-    P.mug((9.02, 0.58, zc), "#d98c4a", full=False)
-    # east counter
-    X.utensil_jar((9.66, 1.75, zc))
-    X.knife_block((9.68, 1.5, zc), -PI / 2)
-    for i, (h, col) in enumerate(((0.16, "#c9a56a"), (0.13, "#e8dcc0"), (0.16, "#6b3f24"), (0.11, "#d9523a"))):
-        P.jar((9.72, 1.22 - i * 0.11, zc), h, 0.045, col, ["#b33a2e", "#2c4a6e", "#39594a", "#333333"][i])
-    on("wine_bottles_01", 9.72, 2.78, 1.2, part="bordeaux")
-    P.bottle((9.7, 2.9, zc), 0.26, 0.032, "#b8a23a", "#222222", clear=True, name="OliveOil")
-    fruit_bowl(9.47, 2.74, 1.2, bananas=(9.42, 2.95, PI / 2 + 0.2))
-    P.carton((9.56, 0.5, zc), 3.5)                                                     # breakfast things left out in the corner
-    P.carton((9.37, 0.66, zc), 3.25, (0.072, 0.072, 0.2), "#f3f3ee", "#2f6aa8", (("MILK", 0.017), ("3.5 %", 0.011)), "#ffffff",
-             cap="#2f6aa8", name="MilkCarton")
-    on("pot_enamel_01", 9.4, 2.37, 1.2, rot=0.8)
-    on("vintage_electric_kettle", 9.68, 2.1, 1.2, rot=-1.9, scale=0.75)
-    on("brass_pan_01", 9.4, 2.08, 1.2, rot=2.4)
-    X.wall_shelf((x1 - 0.012, 1.42, 1.2), "W", 0.46, 0.085)
-    X.spice_jars((x1 - 0.055, 1.42, 1.2), "W")
-    X.led_strip("LedSouthEast", (8.98, 0.42, 1.447), (9.83, 0.42, 1.447))
-    X.led_strip("LedSouthWest", (6.29, 0.42, 1.447), (7.18, 0.42, 1.447))
-    X.led_strip("LedEast", (x1 - 0.28, 0.52, 1.447), (x1 - 0.28, 1.93, 1.447))
-    # open shelf (east uppers, y 2.55..3.0)
-    for z, items in ((1.468, ("mug", "mug", "bowl")), (1.83, ("jar", "jar", "glass"))):
-        for i, k in enumerate(items):
-            p = (9.68, 2.64 + i * 0.13, z)
-            if k == "mug":
-                P.mug(p, R.choice(["#e8e4da", "#3d6a73", "#b24b3f"]), full=False)
-            elif k == "bowl":
-                P.bowl(p)
-            elif k == "jar":
-                P.jar(p, 0.13, 0.04, R.choice(["#d8c9a3", "#8a5a33"]), "#888888")
-            else:
-                P.glass_cup(p)
+    P.plate((sx, sy, zc - 0.184), 0.11)                    # breakfast things waiting in the sink
+    G.put("bowl_white", sx + 0.04, sy + 0.09, zc - 0.178, 0.5, rough=0.1)
+    G.put("mug_white", sx - 0.1, sy - 0.09, zc - 0.184, 1.1, rough=0.1)
+    G.put("drainer", x1 - 0.4, 3.6, zc, 0.03, rough=0.4)           # scanned drainer with the washed-up things in it
+    G.put("bowl_teal", x1 - 0.42, 3.52, zc + 0.014, 0.0, rough=0.12)
+    G.put("mug_teal", x1 - 0.38, 3.7, zc + 0.014, 2.3, rough=0.12)
+    P.bottle((x1 - 0.12, 3.84, zc), 0.19, 0.03, "#7bc47f", "#ffffff", pump=True, clear=True, name="DishSoap")
+    G.put("sponge", x1 - 0.14, 4.33, zc, 0.3, rough=0.95, spec=0.2)
+    sc("towel_stripe", x1 - 0.47, 3.27, 1.3, rot=0.12, rough=0.95, spec=0.2)
+    X.paper_towel((x1 - 0.14, 4.44, zc))
+    # between the radio and the cooker
+    X.coffee_maker((x1 - 0.36, 1.5, Z(x1 - 0.36, 1.5, 1.3)), F["W"])
+    sc("mug_yellow", x1 - 0.5, 1.7, 1.3, rot=0.9, rough=0.12)
+    sc("capsules", x1 - 0.17, 1.78, 1.3, rot=F["W"] + 0.25, rough=0.5)
+    # island: fruit, spices, the day's bits
+    zi = Z(7.95, 3.44, 1.3)
+    ph("wooden_cutting_board", 7.44, 3.4, zi, rot=PI / 2 + 0.12)
+    fruit_bowl(7.95, 3.42, 1.3, bananas=(8.02, 3.14, 0.4))
+    # breakfast was not cleared away: cereal, cocoa, the bowl and a mug
+    sc("cereal", 7.52, 3.02, 1.3, rot=G.face(-0.55, 0.85), rough=0.5)
+    sc("cocoa", 7.72, 2.96, 1.3, rot=G.face(-0.3, 0.9) , rough=0.4)
+    sc("bowl_white", 7.5, 3.36, 1.3, rot=0.0, rough=0.1)
+    sc("mug_red", 7.7, 3.28, 1.3, rot=2.2, rough=0.14)
+    sc("teapot", x1 - 0.2, 3.08, 1.3, rot=2.6, rough=0.1)
+    # under-cupboard lights wherever there really is a cupboard above the worktop
+    for i, yy in enumerate((0.5, 1.1, 3.3, 3.8, 4.3)):
+        zu = under(x1 - 0.22, yy)
+        if zu is not None:
+            X.led_strip("LedEast{}".format(i), (x1 - 0.22, yy - 0.12, zu - 0.003), (x1 - 0.22, yy + 0.12, zu - 0.003))
+            C.light("UnderCabinet{}".format(i), (x1 - 0.22, yy, zu - 0.06), 2.2, "#fff1d6", radius=0.04)
     # window sill
     small_plant(7.55, 0.03, 1.084, "fern")
     P.bottle((8.6, 0.03, 1.084), 0.16, 0.028, "#e9e2d0", "#3a8a5a")
-    # dining table
-    tx, ty = 7.5, 2.75
-    zt = Z(tx + 0.25, ty + 0.3, 1.2)
-    fruit_bowl(tx - 0.2, ty - 0.38, 1.2, bananas=(tx + 0.2, ty - 0.44, 0.5))
-    for (px, py, col) in ((tx + 0.22, ty + 0.05, "#9fb7ad"), (tx - 0.2, ty + 0.42, "#9fb7ad")):
-        C.box("Placemat", (0.3, 0.42, 0.003), (px, py, zt), P.FAB("rough_linen", col, size=0.15), rot=R.uniform(-0.1, 0.1) + (PI / 2 if py > ty + 0.3 else 0))
-    P.plate((tx + 0.22, ty + 0.03, zt + 0.003), 0.115)
-    on("croissant", tx + 0.22, ty + 0.03, 1.2)
-    P.mug((tx + 0.05, ty + 0.3, zt), "#3d6a73")
-    P.plate((tx - 0.2, ty + 0.42, zt + 0.003), 0.115)
-    P.mug((tx + 0.25, ty + 0.5, zt), "#b24b3f")
-    P.phone((tx - 0.3, ty + 0.1, zt), 0.3)
-    P.glass_cup((tx - 0.28, ty - 0.12, zt), fill=0.5, drink="#f0a030")
-    # the breakfast things waiting in the sink
-    P.plate((8.1, 0.47, 0.716), 0.11)
-    P.bowl((8.2, 0.53, 0.722), 0.06, 0.045, "#e8e4da")
-    P.mug((8.02, 0.41, 0.716), "#d98c4a", full=False)
-    # the child's bowl and cup
-    P.bowl((tx + 0.05, ty - 0.2, zt), 0.06, 0.04, "#8fd0c4")
-    X.sippy_cup((tx + 0.1, ty - 0.58, zt), "#ef6aa0")
-    # top of fridge
-    on("long_life_food", 9.55, 3.3, 2.3, part="milk")
+    # the table is laid for dinner; the family's own things are on it too
+    zt = Z(tx, ty, 1.2)
+    P.phone((tx + 0.12, ty + 0.05, zt), 0.3)
+    G.put("bowl_teal", tx - 0.1, ty + 0.3, zt, 0.0, rough=0.12)
+    X.sippy_cup((tx - 0.02, ty + 0.48, zt), "#ef6aa0")
+    G.put("mug_teal", tx + 0.2, ty - 0.35, zt, 4.0, rough=0.12)
+    G.put("pencil_case", tx + 0.16, ty - 0.02, zt, 1.1, rough=0.7)
+    P.drawing((tx - 0.12, ty - 0.05, zt + 0.001), 2, rot=0.4)
+    P.crayons((tx + 0.02, ty - 0.2, zt), 5, 0.06)
+    on("long_life_food", x0 + 0.3, 4.1, 2.3, part="milk")
 
 
 # ================================================================== HALL ===
@@ -401,19 +381,23 @@ def hall(M):
                    P.FAB(tex, col, size=0.25), round_=0.03, cuts=3)
     P.tote((hx(4) - 0.02, y1 - 0.03, 1.79), "S")
     ph("fishermans_hat", 1.65, y1 - 0.11, 1.872, rot=0.4)
+    G.put("hat", 1.28, y1 - 0.16, 1.872, 0.9, rough=0.85, spec=0.25, scale=0.9)
     C.box("ScarfBox", (0.3, 0.16, 0.12), (0.95, y1 - 0.105, 1.872), P.FAB("rough_linen", "#59636b", size=0.2), bevel=0.01)
     # open shoe rack with mismatched everyday pairs
     _, lv = X.shoe_rack((1.3, y1 - 0.004, 0), F["S"])
     ry = y1 - 0.004 - 0.15
-    P.shoes((1.03, ry, lv[2]), F["S"] + 0.05, 0.29, "#e8e6e1")
-    P.shoes((1.36, ry + 0.01, lv[2]), F["S"] - 0.1, 0.255, "#2f3b52", "#ffffff")
-    P.shoes((1.64, ry - 0.02, lv[2]), F["S"] + 0.3, 0.15, "#ef6aa0", "#ffffff", gap=0.075)
-    P.shoes((1.05, ry, lv[1]), F["S"], 0.28, "#6b4a32", "#2a2420", kind="boot")
-    P.shoes((1.42, ry - 0.01, lv[1]), F["S"] + 0.08, 0.27, "#8a8f96", "#e9e9e6")
-    P.shoes((1.63, ry + 0.02, lv[1]), F["S"] + PI, 0.16, "#3aa655", "#ffffff", gap=0.075, single=True)
-    P.slippers((1.1, ry + 0.01, lv[0]), F["S"] + 0.1, "#7c8a97")
-    P.shoes((1.5, ry - 0.01, lv[0]), F["S"] - 0.05, 0.26, "#1e1e20", "#1e1e20")
-    P.shoes((1.55, y1 - 0.6, 0), F["S"] - 0.5, 0.275, "#c9c2b4", "#f4f4f2")     # kicked off in front of the rack
+    S_ = -PI / 2                                             # toes point out into the hall
+    G.pair("boot_red", 1.03, ry, lv[2], S_ + 0.05, gap=0.12)
+    G.pair("run_blue", 1.33, ry + 0.01, lv[2], S_ - 0.08, gap=0.12, stagger=0.03)
+    G.pair("kid_trainer", 1.6, ry - 0.01, lv[2], S_ + 0.2, gap=0.1, stagger=-0.04)
+    G.pair("run_pink", 1.05, ry, lv[1], S_ - 0.04, gap=0.12)
+    G.pair("sneaker_white", 1.37, ry - 0.01, lv[1], S_ + 0.07, gap=0.115, stagger=0.02)
+    G.shoe("kid_deck", 1.62, ry + 0.01, lv[1], S_ + PI + 0.15)          # its twin is under the rack
+    G.shoe("kid_deck", 1.98, y1 - 0.56, 0.0, S_ + 0.9, mirror=True)
+    G.pair("boot_ugg", 1.52, y1 - 0.62, 0.0, S_ - 0.45, gap=0.15, stagger=0.09, splay=0.16)     # kicked off in front of the rack
+    G.put("backpack", 2.52, y1 - 0.2, 0.0, 0.12, rough=0.7, spec=0.3, tilt=(-0.07, 0.0))
+    G.put("kid_backpack", 1.85, y0 + 0.19, 0.0, PI - 0.2, rough=0.75, spec=0.3)
+    G.put("lunchbox", 2.2, y0 + 0.1, 0.0, PI + 0.25, rough=0.6, spec=0.3)
     ph("rubber_boots", 2.02, y1 - 0.2, rot=0.1, part=r"^rubber_boots_l_LOD0")
     ph("rubber_boots", 2.16, y1 - 0.22, rot=-0.15, part=r"^rubber_boots_r_LOD0")
     P.bin_round((0.33, y1 - 0.17, 0), 0.11, 0.5, P.METAL("black"), bag=False)
@@ -454,7 +438,12 @@ def hall(M):
     P.table_lamp((4.95, y0 + 0.17, zc), base="#b9a98c", power=55)
     on("ceramic_vase_04", 5.75, y0 + 0.16, 1.2)
     on("standing_picture_frame_01", 5.45, y0 + 0.2, 1.2, rot=F["N"] + 0.2)
-    P.book_stack((5.2, y0 + 0.16, zc), 2, 0.4)
+    for i, (part, br) in enumerate((("cover24", 0.35), ("cover62", 0.6), ("softcover_01_cover14", 0.2))):   # scanned books, lying flat
+        c_, s_ = math.cos(br), math.sin(br)
+        ph("decorative_book_set_01", 5.2 - 0.115 * c_, y0 + 0.17 - 0.115 * s_, zc + 0.02 + i * 0.038, rot=br, part=part, tilt=(0.0, PI / 2))
+    P.cable([(4.95, y0 + 0.1, zc + 0.012), (4.97, y0 + 0.008, zc + 0.006), (5.0, y0 + 0.01, 0.3), (5.3, y0 + 0.03, 0.008),
+             (5.95, y0 + 0.035, 0.006), (6.15, y0 + 0.03, 0.06), (6.2, y0 + 0.03, 0.3)], 0.0025, "#e9e6df")
+    C.box("LampPlug", (0.04, 0.035, 0.04), (6.2, y0 + 0.022, 0.28), P.PL("#f4f4f2", 0.3), bevel=0.006)
     small_plant(9.5, y0 + 0.3, Z(9.5, y0 + 0.3, 1.2), "anthurium", "#e9e6df", 0.08, 0.12)
     zb = Z(6.6, y1 - 0.3, 1.0)
     ph("football", 8.9, y0 + 0.25, part="inflated")
@@ -467,12 +456,13 @@ def bedroom(M):
     S.radiator("BedRadiator", "x", y1 - 0.004, 2.1, 1.3, -1, M)
     X.curtains("BedCurtain", "x", y1, -1, 1.2, 3.0, color="#7f8c8a", z_top=2.5, open_frac=0.3, off=0.24)
     X.curtains("BedSheer", "x", y1, -1, 1.2, 3.0, z_top=2.5, sheer=True, off=0.17)
-    bx, by = x0 + 0.12 + 1.03, 8.72
-    bed = X.bed((bx, by, 0), PI / 2)          # own simulated bed (the Loft demo bed was dropped: its licence could not be confirmed)
-    ns = 1.14
-    ph("side_table_01", x0 + 0.25, by - ns, rot=F["E"])
-    ph("side_table_01", x0 + 0.25, by + ns, rot=F["E"])
-    X.wardrobe((1.68, y0, 0), F["N"], w=1.7)
+    # Bed with its bedding, two low bedside tables and the mirrored wardrobe: 'Bedroom' by SlykDrako (CC0)
+    by = 8.6
+    _bed, bparts = MI.kit("bedroom", "BedSet",
+           keep=r"^(WoodFurniture|StainlessSmooth|Aluminium|Matress|Bedsheets|PictureFrame|PictureBacking|Picture|BookCover|BookPages)$",
+           box=((-1.78, -1.08, -0.1), (1.86, 1.12, 1.0)), rot=PI / 2, loc=(x0 + 1.07, by - 0.015, 0.0))
+    MI.kit("bedroom", "Wardrobe", keep=r"^(WoodFurniture|StainlessSmooth|Aluminium|Mirror|Blankets|Boxes)$",
+           box=((-2.8, -0.9, -0.1), (-2.05, 0.9, 2.3)), rot=PI / 2, loc=(1.72, y0 + 2.76, 0.0))
     X.crib((x1 - 0.38, 9.72, 0), 0.0)
     ph("painted_wooden_cabinet", x1 - 0.33, 8.25, rot=F["W"])
     P.rug("BedRug", 1.15, 1.9, (2.9, 8.6, 0), kind="stripes")
@@ -485,32 +475,28 @@ def bedroom(M):
     ph("hanging_picture_frame_03", x1 - 0.02, 8.25, 1.45, rot=F["W"])
     refresh()
 
-    # nightstands
-    for k, yy in enumerate((by - ns, by + ns)):
-        zt = Z(x0 + 0.25, yy, 1.0)
-        P.table_lamp((x0 + 0.22, yy + (0.1 if k else -0.1), zt), on=(k == 0), h=0.38, base="#d9d2c0")
-        if k == 0:
-            ph("alarm_clock_01", x0 + 0.3, yy + 0.15, zt, rot=F["E"] - 0.3, part="^rig_")
-            P.phone((x0 + 0.36, yy + 0.02, zt), 1.2)
-            P.glass_cup((x0 + 0.16, yy + 0.16, zt), fill=0.4, drink="#dfeaf0")
-        else:
-            P.book_stack((x0 + 0.3, yy - 0.12, zt), 3, PI / 2)
-            on("round_spectacles", x0 + 0.3, yy - 0.12, 1.0, rot=1.0)
-            P.bottle((x0 + 0.17, yy - 0.18, zt), 0.12, 0.022, "#f2e9e4", "#d9a6a0", name="HandCream")
-    # bed
-    zb = 0.56
-    # phone charger: adapter in the wall socket, cable up to the nightstand
-    C.box("ChargerPlug", (0.03, 0.045, 0.045), (x0 + 0.03, 6.86, 0.28), P.PL("#f4f4f2", 0.3), bevel=0.006)
-    P.cable([(x0 + 0.045, 6.86, 0.3), (x0 + 0.1, 6.9, 0.05), (x0 + 0.5, 7.0, 0.012), (x0 + 0.7, by - ns - 0.1, 0.25),
-             (x0 + 0.55, by - ns, 0.56), (x0 + 0.37, by - ns + 0.02, 0.56)], 0.0022, "#f1f1ee")
-    P.slippers((1.7, by - ns + 0.05, 0), PI / 2 + 0.2)
+    # bedside tables (south one has the lamp that is on, the clock and the charging phone)
+    ys, yn = by - 1.43, by + 1.49
+    zt = Z(x0 + 0.33, ys + 0.2, 1.0)
+    P.table_lamp((x0 + 0.3, ys + 0.16, zt), on=True, h=0.38, base="#d9d2c0")
+    ph("alarm_clock_01", x0 + 0.38, ys - 0.02, zt, rot=F["E"] - 0.3, part="^rig_")
+    P.phone((x0 + 0.42, ys + 0.26, zt), 1.2)
+    zt2 = Z(x0 + 0.33, yn - 0.2, 1.0)
+    P.table_lamp((x0 + 0.3, yn - 0.18, zt2), on=False, h=0.38, base="#d9d2c0")
+    on("round_spectacles", x0 + 0.4, yn - 0.02, 1.0, rot=1.0)
+    G.put("jar_cream", x0 + 0.22, yn + 0.02, zt2, 1.0, rough=0.25)
+    # phone charger: adapter in the wall socket between table and bed, lead up to the phone
+    C.box("ChargerPlug", (0.03, 0.045, 0.045), (x0 + 0.03, 7.63, 0.28), P.PL("#f4f4f2", 0.3), bevel=0.006)
+    P.cable([(x0 + 0.045, 7.63, 0.3), (x0 + 0.1, 7.62, 0.06), (x0 + 0.42, 7.58, 0.006), (x0 + 0.56, 7.5, 0.1),
+             (x0 + 0.5, ys + 0.3, zt + 0.004), (x0 + 0.43, ys + 0.27, zt + 0.006)], 0.0022, "#f1f1ee")
+    P.slippers((2.5, 8.3, 0), PI / 2 + 0.2)
     for i, (sx_, sy_) in enumerate(((2.62, 7.62), (2.8, 7.5))):
         P.garment("Sock", 0.1, 0.24, (sx_, sy_, 0.0), [bpy.data.objects["Floor_bedroom"]], "#e4e0d6", "cotton_jersey", rot=0.6 + i, drop=0.06)
     # dresser top
     dx, dy = x1 - 0.33, 8.25
     zd = Z(dx, dy, 1.5)
-    P.bottle((dx + 0.05, dy - 0.3, zd), 0.17, 0.03, "#f6e9d2", "#7fb7be", pump=True, name="Lotion")
-    P.bottle((dx + 0.1, dy - 0.42, zd), 0.12, 0.028, "#f1c9d0", "#ffffff", name="BabyOil")
+    G.put("basket", dx + 0.04, dy - 0.36, zd, PI / 2 + 0.08, rough=0.8, spec=0.3)           # nappy-change bits live in here
+    G.put("washcloth", dx + 0.04, dy - 0.36, zd + 0.07, PI / 2 + 0.3, rough=0.95, spec=0.2)
     on("standing_picture_frame_02", dx + 0.1, dy - 0.12, 1.5, rot=F["W"] - 0.2)
     C.box("BabyMonitor", (0.07, 0.04, 0.11), (dx + 0.12, dy + 0.22, zd), P.PL("#f1f1ee", 0.35), rot=-PI / 2 - 0.3, bevel=0.01)
     # clothes chair
@@ -521,7 +507,13 @@ def bedroom(M):
     # floor
     ph("baseball_01", 3.2, 9.2, 0.014)
     P.picture_book((3.05, 8.95, 0.012), 1.1, 1)
-    P.shoes((3.25, 7.75, 0), 1.9, 0.27, "#333333", "#333333")
+    G.pair("boat", 3.25, 7.75, 0.0, 1.9, gap=0.13, stagger=0.07, splay=0.12)
+    sc("teddy", x0 + 1.25, by + 0.45, 1.2, rot=1.9, rough=0.95, spec=0.2)                     # left on the parents' bed
+    throw = C.drape("BedThrow", 0.72, 1.95, (x0 + 1.5, by + 0.06, 0.85), 0.07, P.creased(P.FAB("knitted_fleece", "#4f6d73", size=0.16, normal=2.0), 0.4, 0.6),
+            [o for objs in bparts.values() for o in objs if o.type == "MESH"] + [bpy.data.objects["Floor_bedroom"]],
+            bend=0.03, shrink=-0.04, res=44, thick=0.0035)
+    if throw is not None:
+        throw.location.z += 0.012                                        # clear of the bedspread it settled into
 
 
 # ================================================================ OFFICE ===
@@ -541,7 +533,7 @@ def office(M):
     ph("plastic_container", 7.0, 7.08, rot=PI / 2 + 0.1, scale=0.6)
     ph("Ukulele_01", 7.27, 9.38, 0.0, rot=-PI / 2, tilt=(-0.14, 0.0))
     P.backpack((4.72, 10.2, 0), 0.6, "#40574b")
-    P.bin_round((4.6, 9.9, 0), 0.12, 0.3, P.PL("#2a2b2c", 0.5), bag=False)
+    G.put("bin", 4.6, 9.9, 0.0, 0.3, rough=0.45)
     P.crumpled((4.6, 9.9, 0.008), 3, 0.045)
     P.crumpled((4.85, 9.72, 0.0), 1, 0.02)
     ph("wall_clock", 4.6, y0 + 0.03, 1.9, rot=F["N"])
@@ -550,12 +542,13 @@ def office(M):
 
     zt = Z(5.8, 10.0, 1.2)
     P.monitor((5.45, 10.2, zt), 0.0, kind="off")
-    P.keyboard((5.45, 9.9, zt), 0.02)
+    G.put("keyboard", 5.45, 9.9, zt, 0.02, rough=0.4)
     on("classic_laptop", 6.12, 10.02, 1.2, rot=PI + 0.35, scale=0.56)
     C.box("Mousepad", (0.24, 0.2, 0.003), (5.82, 9.9, zt), P.PL("#1d1d1f", 0.9), bevel=0.001)
-    P.mouse((5.82, 9.9, zt + 0.009), 0.1)
+    G.put("mouse", 5.82, 9.9, zt + 0.003, 0.1, rough=0.4)
     X.desk_lamp((6.58, 10.3, zt), 0.5)
-    P.mug((6.55, 10.02, zt), "#e8e4da")
+    G.put("mug_teal", 6.55, 10.02, zt, 5.2, rough=0.12)
+    G.put("drive", 5.93, 10.24, zt, 0.25, rough=0.35, pre=(0, PI / 2, 0))
     P.mug((5.0, 10.3, zt), "#333333", full=False)
     for i in range(3):
         C.pipe("Pen", [(4.98 + i * 0.012, 10.3, zt + 0.01), (4.97 + i * 0.03, 10.31 - i * 0.02, zt + 0.17)], 0.004,
@@ -594,87 +587,101 @@ def office(M):
 
 # ================================================================== BATH ===
 def bath(M):
+    """Wood vanity with two marble basins, long mirror and pendant bulbs, a freestanding tub, the rug
+    and the wall shelf come from 'Contemporary Bathroom' by Mareck (CC0), turned so that its window
+    wall is our north wall and widened 3.5 % to span the room. Toilet, towel rail and the family's
+    things are ours."""
     C.collection("Bathroom")
     x0, y0, x1, y1 = S.inner("bath")
-    X.bathtub((9.0, y1, 0), 0.0)
+    k = (x1 - x0) / 2.31
+    lx, ly = x0 - 0.19 * k, y1 - 2.5 * k
+    _kit, _parts = MI.kit("bathroom", "ContempBath", drop=r"^(Floor|GreyWall|Ceiling|Wallpaper|WhiteWood|WindowFrame|Blinds|BlindsString|Light|Leaves|LeaveStems|Foam|Painting3|Painting4)$",
+           box=((-2.7, 0.0, -0.1), (0.3, 2.6, 3.0)), scale=k, rot=-PI / 2, loc=(lx, ly, 0.0))
+    mm = bpy.data.materials.get("bathroom:Marble")
+    if mm:                                                             # the scene's UVs smear the stone over the basin sides
+        nt = mm.node_tree
+        tex = next(n for n in nt.nodes if n.type == "TEX_IMAGE")
+        tex.projection, tex.projection_blend = "BOX", 0.2
+        tc, mp = nt.nodes.new("ShaderNodeTexCoord"), nt.nodes.new("ShaderNodeMapping")
+        mp.inputs["Scale"].default_value = (1.7, 1.7, 1.7)
+        nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+        nt.links.new(mp.outputs[0], tex.inputs["Vector"])
+        nt.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.22
+    for o in _parts.get("Marble", []):
+        bv = o.modifiers.new("Arris", "BEVEL")
+        bv.width, bv.segments, bv.limit_method, bv.angle_limit = 0.003, 2, "ANGLE", 0.7
+    ch = P.METAL("chrome")
+    ty_ = 9.52                                                         # bath filler on the wall, waste in the tub floor
+    C.cyl("BathTapRose", 0.03, 0.01, (x0 + 0.004, ty_, 0.82), ch, rot=(0, PI / 2, 0), segs=24)
+    C.pipe("BathSpout", [(x0 + 0.006, ty_, 0.82), (x0 + 0.13, ty_, 0.82), (x0 + 0.17, ty_, 0.775)], 0.013, ch)
+    for sgn in (-1, 1):
+        C.cyl("BathTapHead", 0.024, 0.045, (x0 + 0.004, ty_ + sgn * 0.13, 0.82), ch, rot=(0, PI / 2, 0), segs=20, bevel=0.004)
+        C.box("BathTapLever", (0.012, 0.07, 0.012), (x0 + 0.055, ty_ + sgn * 0.13, 0.814), ch, bevel=0.004, rot=0.3 * sgn)
+    for i, bxs in enumerate((-1.7, -1.36, -1.0)):                      # the pendant bulbs over the vanity are on
+        C.light("VanityBulb{}".format(i), (lx + k * 2.2, ly - k * bxs, 1.89 * k), 7, "#ffd9a8", radius=0.03)
     X.roller_blind("BathBlind", "x", y1 + 0.1, -1, 8.5, 9.1, 2.18, 0.42, "#e9e5da")
-    X.washing_machine((x0 + 0.31, y1, 0), 0.0)
-    X.toilet((x0, 8.75, 0), F["E"])
-    X.vanity((x1, 7.9, 0), F["W"])
-    X.towel_radiator((x1, 9.0, 0), F["W"])
-    P.ceiling_dome((8.2, 7.9, S.H), power=26)
-    P.rug("BathMat", 0.8, 0.5, (8.95, 9.38, 0), rot=0.07, color="#8fa69b", tex="terry_cloth", thick=0.02, size=0.09, curl=0.006)
-    P.laundry_basket((x0 + 0.27, 7.2, 0), PI / 2)
-    X.wall_shelf((x0 + 0.004, 8.75, 1.25), "E", 0.7, 0.18)
-    X.potty((7.78, 9.5, 0), PI / 2 + 0.4)
-    ph("wooden_stool_01", 9.12, 7.62, rot=0.3, scale=0.6)
-    # toilet paper holder + brush + bin
-    C.pipe("TPHolder", [(x0 + 0.004, 8.2, 0.72), (x0 + 0.08, 8.2, 0.72), (x0 + 0.08, 8.35, 0.72)], 0.008, P.METAL("chrome"),
-           smooth=False)
+    X.toilet((x0, 7.75, 0), F["E"])
+    X.towel_radiator((x1, 7.3, 0), F["W"])
+    P.ceiling_dome((8.65, 8.3, S.H), power=22)
+    P.laundry_basket((x0 + 0.27, 7.05, 0), PI / 2)
+    X.wall_shelf((x0 + 0.004, 7.75, 1.25), "E", 0.7, 0.18)
+    C.pipe("TPHolder", [(x0 + 0.004, 8.2, 0.72), (x0 + 0.08, 8.2, 0.72), (x0 + 0.08, 8.35, 0.72)], 0.008, P.METAL("chrome"), smooth=False)
     C.cyl("TPHolderRose", 0.024, 0.008, (x0 + 0.004, 8.2, 0.72), P.METAL("chrome"), rot=(0, PI / 2, 0), segs=20)
     P.toilet_roll((x0 + 0.08, 8.33, 0.72), (PI / 2, 0, 0))
-    C.cyl("BrushHolder", 0.05, 0.14, (x0 + 0.12, 9.22, 0), P.PL("#f1f1ee", 0.35), bevel=0.008)
-    C.pipe("BrushHandle", [(x0 + 0.12, 9.22, 0.1), (x0 + 0.12, 9.22, 0.42)], 0.007, P.PL("#f1f1ee", 0.35), smooth=False)
-    P.bin_round((x0 + 0.14, 8.22, 0), 0.09, 0.24, P.PL("#f1f1ee", 0.35))
-    ph("plunger", x0 + 0.13, 9.42)
-    # towels
+    C.cyl("BrushHolder", 0.05, 0.14, (x0 + 0.12, 7.4, 0), P.PL("#f1f1ee", 0.35), bevel=0.008)
+    C.pipe("BrushHandle", [(x0 + 0.12, 7.4, 0.1), (x0 + 0.12, 7.4, 0.42)], 0.007, P.PL("#f1f1ee", 0.35), smooth=False)
+    P.bin_round((x0 + 0.14, 8.5, 0), 0.08, 0.24, P.PL("#f1f1ee", 0.35))
+    ph("plunger", x0 + 0.12, 8.08)
+    on("bleach_bottle", x0 + 0.1, 6.78, 0.5, rot=1.0)
+    ph("potted_plant_04", 8.8, y1 + 0.07, 1.404, scale=1.1)
+    ph("wooden_stool_01", 8.56, 9.82, rot=0.4)                         # scanned stool by the tub for the bath towel
     bw = [bpy.data.objects["Skin_bath"]]
-    P.towel_hanging((x1 - 0.06, 8.85, 1.565), "W", 0.4, 0.55, 0.38, "#c9d3d6", colliders=bw)
-    P.towel_hanging((x1 - 0.06, 9.12, 1.21), "W", 0.36, 0.36, 0.28, "#e2b8a0", colliders=bw)
-    # tub edge
-    P.flat_bottle((8.31, y1 - 0.045, 0.56), 0.12, 0.068, 0.04, 0.22, "#2f7fa6", "#ffffff", "#f4f1ea",
-                  (("NORDA", 0.012), ("shampoo", 0.007), ("400 ml", 0.005)), "#173247")
-    P.flat_bottle((8.405, y1 - 0.05, 0.56), -0.2, 0.062, 0.038, 0.19, "#f0e4c4", "#3a3a3a", "#ffffff",
-                  (("Dr. Hale", 0.0095), ("body wash", 0.0065), ("sensitive", 0.005)), "#30463a", name="BodyWash")
-    P.flat_bottle((8.495, y1 - 0.042, 0.56), 0.3, 0.06, 0.038, 0.165, "#e77fa6", "#ffffff", "#fff6da",
-                  (("lumi", 0.014), ("kids 2in1", 0.0065)), "#7a2d58", name="KidsShampoo")
-    ph("rubber_duck_toy", 8.21, y1 - 0.05, 0.56, rot=2.9, scale=0.36)
-    ph("rubber_duck_toy", 8.52, y1 - 0.36, 0.145, rot=0.7, scale=0.3)
-    for i, col in enumerate(("#e2392f", "#2f6fd0", "#3aa655")):
-        C.lathe("BathCup", [(0, 0), (0.03, 0), (0.04, 0.06), (0.036, 0.06), (0.027, 0.005), (0, 0.005)],
-                (8.75 + i * 0.12, y1 - 0.33 - i * 0.05, 0.145), P.PL(col, 0.3), segs=20, sub=0)
-    C.soft_box("Soap", (0.08, 0.05, 0.025), (9.3, y1 - 0.04, 0.56), P.PL("#efe6c8", 0.4), round_=0.01, cuts=2)
-    P.towel_hanging((8.62, y1 - 0.7125, 0.566), "S", 0.5, 0.3, 0.24, "#d9d3c5",
-                    colliders=[o for o in bpy.data.objects if o.name.startswith(("tub", "apron", "rim"))])     # used towel over the tub edge
+    P.towel_hanging((x1 - 0.06, 7.15, 1.565), "W", 0.4, 0.55, 0.38, "#c9d3d6", colliders=bw)
+    P.towel_hanging((x1 - 0.06, 7.42, 1.21), "W", 0.36, 0.36, 0.28, "#e2b8a0", colliders=bw)
     refresh()
-    # vanity
-    zv = 0.88
-    X.toothbrush_cup((x1 - 0.05, 7.6, zv))
-    P.bottle((x1 - 0.05, 8.22, zv), 0.17, 0.03, "#dfe9e6", "#c0c0c0", pump=True, name="HandSoap")
-    C.pipe("Toothpaste", [(x1 - 0.06, 7.72, zv + 0.015), (x1 - 0.05, 7.86, zv + 0.012)], 0.014, P.PL("#e9f1f6", 0.3), smooth=False)
-    X.skincare((x1 - 0.045, 8.02, zv), "W")
-    P.flat_bottle((x1 - 0.05, 8.305, zv), -PI / 2 + 0.2, 0.055, 0.034, 0.15, "#e9ede6", "#9fb7a8", "#ffffff",
+    # shampoo within reach of the tub, on the wall shelf above it
+    for yy, args in ((8.72, (0.068, 0.04, 0.22, "#2f7fa6", "#ffffff", "#f4f1ea", (("NORDA", 0.012), ("shampoo", 0.007), ("400 ml", 0.005)), "#173247", "Shampoo")),
+                     (8.86, (0.062, 0.038, 0.19, "#f0e4c4", "#3a3a3a", "#ffffff", (("Dr. Hale", 0.0095), ("body wash", 0.0065), ("sensitive", 0.005)), "#30463a", "BodyWash")),
+                     (9.0, (0.06, 0.038, 0.165, "#e77fa6", "#ffffff", "#fff6da", (("lumi", 0.014), ("kids 2in1", 0.0065)), "#7a2d58", "KidsShampoo"))):
+        zs_ = Z(x0 + 0.07, yy, 1.9)
+        if zs_ > 1.0:
+            P.flat_bottle((x0 + 0.07, yy, zs_), PI / 2 + R.uniform(-0.2, 0.2), *args[:8], name=args[8])
+    ph("rubber_duck_toy", x0 + 0.45, 9.25, Z(x0 + 0.45, 9.25, 1.0), rot=2.9, scale=0.36)
+    C.cyl("BathWaste", 0.027, 0.004, (x0 + 0.4, 9.9, Z(x0 + 0.4, 9.9, 0.5)), P.METAL("chrome"), segs=24)
+    sc("bath_towel_blue", 8.56, 9.82, 1.0, rot=0.55, rough=0.95, spec=0.2)
+    # vanity top, south of the basins
+    zv = Z(x1 - 0.2, 8.2, 1.2)
+    X.toothbrush_cup((x1 - 0.1, 8.1, zv))
+    G.put("fish_holder", x1 - 0.12, 8.3, zv, PI / 2, rough=0.15)          # the child's
+    G.put("soap_dish", x1 - 0.37, 8.31, zv, 0.2, rough=0.2)
+    G.put("hand_towel", x1 - 0.36, 8.1, zv, 0.1, rough=0.95, spec=0.2)
+    G.put("jar_cream", x1 - 0.22, 8.21, zv, 2.0, rough=0.25)
+    G.put("argan", x1 - 0.11, 8.19, zv, F["W"] + 0.2, rough=0.4)
+    P.flat_bottle((x1 - 0.1, 9.34, Z(x1 - 0.1, 9.34, 1.2)), -PI / 2 + 0.2, 0.055, 0.034, 0.15, "#e9ede6", "#9fb7a8", "#ffffff",
                   (("mild", 0.011), ("face wash", 0.006)), "#365246", name="FaceWash")
-    # washer top
-    zw = 0.85
-    on("all_purpose_cleaner", x0 + 0.47, y1 - 0.15, 1.2, rot=2.0)
-    on("multi_cleaner_bottle", x0 + 0.44, y1 - 0.38, 1.2)
-    P.garment("WasherTowel", 0.45, 0.6, (x0 + 0.26, y1 - 0.4, zw), [o for o in bpy.data.objects if o.name.startswith("WashingMachine")],
-              "#d9d3c5", "terry_cloth", rot=0.3, drop=0.12)
-    # shelf above toilet
+    # shelf above the toilet
     zs = 1.25
     for i in range(3):
-        P.toilet_roll((x0 + 0.1, 8.5 + i * 0.115, zs))
-    P.toilet_roll((x0 + 0.1, 8.56, zs + 0.1))
-    P.bottle((x0 + 0.09, 8.95, zs), 0.15, 0.03, "#f4f0e6", "#b89a6a", name="Lotion2")
-    P.candle((x0 + 0.1, 9.04, zs), 0.06, 0.03)
-    on("bleach_bottle", x0 + 0.12, 9.62, 0.5, rot=1.0)
-    ph("potted_plant_04", 8.8, y1 + 0.07, 1.404, scale=1.1)
+        P.toilet_roll((x0 + 0.1, 7.5 + i * 0.115, zs))
+    P.toilet_roll((x0 + 0.1, 7.56, zs + 0.1))
+    P.bottle((x0 + 0.09, 7.95, zs), 0.15, 0.03, "#f4f0e6", "#b89a6a", name="Lotion2")
+    P.candle((x0 + 0.1, 8.04, zs), 0.06, 0.03)
 
 
 def furnish(M):
     import importlib
     importlib.reload(W)
+    importlib.reload(MI)
+    importlib.reload(G)
     switches(M)
     for fn in (living, kitchen, hall, bedroom, office, bath):
         fn(M)
     refresh()
     # crumbs where the family eats (after refresh, so each one lands on what is really under it)
     C.collection("Kitchen")
-    tx, ty = 7.5, 2.75
-    zt = Z(tx + 0.25, ty + 0.3, 1.2)
-    W.crumbs("CrumbsPlate", (tx + 0.22, ty + 0.03, zt), 18, 0.09, hole=0.125, seed=3, zf=lambda x, y: Z(x, y, zt + 0.05))
-    W.crumbs("CrumbsKid", (tx - 0.2, ty + 0.42, zt), 16, 0.1, hole=0.125, seed=5, zf=lambda x, y: Z(x, y, zt + 0.05))
-    W.crumbs("CrumbsFloor", (tx - 0.5, ty + 0.6, 0.0), 26, 0.24, seed=8, zf=lambda x, y: Z(x, y, 0.05))
+    tx, ty = 7.44, 0.97
+    zt = Z(tx, ty, 1.2)
+    W.crumbs("CrumbsKid", (tx - 0.1, ty + 0.3, zt), 16, 0.1, hole=0.07, seed=5, zf=lambda x, y: Z(x, y, zt + 0.05))
+    W.crumbs("CrumbsFloor", (tx - 0.35, ty + 0.75, 0.0), 26, 0.24, seed=8, zf=lambda x, y: Z(x, y, 0.05))
     W.apply(M)
     refresh()

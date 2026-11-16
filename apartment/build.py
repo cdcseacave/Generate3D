@@ -82,13 +82,17 @@ def build(seed=7, furnish=True, sky="afternoon"):
 VIEWS = {
     "living_room_01": ((1.95, 3.35, 1.5), (1.2, 0.95, 0.6), 35),
     "living_room_02": ((5.3, 3.2, 1.5), (4.75, 0.55, 0.7), 35),
-    "kitchen_01": ((8.7, 2.0, 1.5), (9.6, 2.7, 1.0), 35),
-    "hallway_01": ((5.3, 5.15, 1.45), (0.3, 6.05, 1.0), 28),
+    "kitchen_01": ((6.95, 4.25, 1.5), (9.0, 1.7, 0.9), 28),
+    "kitchen_02": ((7.2, 4.2, 1.5), (7.8, 3.3, 0.98), 35),
+    "hallway_01": ((4.3, 5.95, 1.45), (5.35, 4.75, 0.85), 35),
     "hallway_02": ((7.7, 5.2, 1.45), (9.45, 6.05, 0.8), 35),
-    "bedroom_01": ((2.55, 8.25, 1.45), (0.42, 7.48, 0.62), 35),
+    "hallway_03": ((1.97, 4.95, 1.5), (1.72, 6.3, 0.32), 35),
+    "bedroom_01": ((2.6, 8.3, 1.45), (0.5, 7.25, 0.5), 35),
     "bedroom_02": ((2.3, 9.3, 1.45), (3.85, 8.3, 0.95), 28),
+    "bedroom_03": ((3.3, 9.35, 1.5), (0.9, 8.1, 0.55), 28),
     "office_01": ((6.95, 9.15, 1.45), (6.3, 10.05, 0.88), 35),
-    "bathroom_01": ((8.85, 9.0, 1.5), (8.1, 10.32, 0.82), 35),
+    "bathroom_01": ((8.45, 7.0, 1.5), (8.7, 10.2, 0.75), 28),
+    "bathroom_02": ((8.7, 8.95, 1.5), (9.7, 8.3, 0.95), 35),
 }
 
 FINAL_RES, FINAL_SAMPLES = (1920, 1080), 640
@@ -105,18 +109,22 @@ EXPOSURE_BIAS = {"office_01": -0.25, "bedroom_01": -0.5}
 CAMERA = {
     "living_room_01": {"soften": 0.6, "saturation": 1.0, "contrast": 0.2, "cast": (1.03, 1.0, 0.94)},
     "living_room_02": {"soften": 0.8, "saturation": 0.95, "cast": (1.0, 1.0, 1.0)},
-    "kitchen_01": {"soften": 0.7, "saturation": 1.05, "contrast": 0.22, "cast": (0.98, 1.0, 1.03), "jpeg": 78},
+    "kitchen_01": {"soften": 0.7, "saturation": 1.05, "contrast": 0.22, "cast": (0.98, 1.0, 1.03), "jpeg": 78, "glare": 0.006, "veil": 0.003,
+                   "exposure": -0.2},
     "hallway_01": {"soften": 0.9, "saturation": 0.9, "cast": (1.0, 1.01, 0.97)},
     "hallway_02": {"soften": 0.6, "saturation": 1.05, "contrast": 0.24, "cast": (0.99, 1.02, 0.98)},
     "bedroom_01": {"soften": 1.0, "saturation": 0.92, "cast": (1.04, 1.0, 0.9), "jpeg": 76, "read": 0.006},
     "bedroom_02": {"soften": 0.7, "saturation": 0.9, "cast": (0.97, 1.0, 1.04), "exposure": -0.35},
     "office_01": {"soften": 0.6, "saturation": 1.0, "contrast": 0.22, "cast": (1.0, 1.0, 0.99)},
     "bathroom_01": {"soften": 0.8, "saturation": 0.88, "cast": (0.98, 1.0, 1.03), "jpeg": 80},
+    "kitchen_02": {"soften": 0.8, "saturation": 0.98, "cast": (1.02, 1.0, 0.96)},
+    "bedroom_03": {"soften": 0.7, "saturation": 0.95, "cast": (1.0, 1.0, 0.98), "jpeg": 82},
+    "bathroom_02": {"soften": 0.9, "saturation": 0.9, "cast": (0.99, 1.0, 1.02)},
 }
 # Views a phone would take with its flash on: target ratio of metered light with flash to without.
-FLASH = {"hallway_01": 1.7, "bathroom_01": 1.7, "bedroom_02": 1.8}
+FLASH = {"bathroom_01": 1.7, "bathroom_02": 1.7, "bedroom_02": 1.8, "hallway_03": 1.8}
 # Close 35 mm views are stopped down, as a phone's small sensor would be, so the subject is not a sliver of focus.
-FSTOPS = {"kitchen_01": 8.0, "bedroom_01": 8.0, "bedroom_02": 5.6, "office_01": 8.0, "bathroom_01": 9.0, "hallway_02": 5.6, "living_room_01": 5.6}          # per-view stops added on top of the metered exposure
+FSTOPS = {"bedroom_01": 8.0, "bedroom_02": 5.6, "office_01": 8.0, "hallway_02": 5.6, "living_room_01": 5.6, "kitchen_02": 5.6, "hallway_01": 5.6, "hallway_03": 5.6, "bathroom_02": 9.0}          # per-view stops added on top of the metered exposure
 _EXPOSURE = {}
 
 
@@ -151,7 +159,7 @@ def exposure_for(view):
     if view not in _EXPOSURE:
         _flash(None)
         room = view.rsplit("_", 1)[0]
-        group = [v for v in VIEWS if v.rsplit("_", 1)[0] == room]
+        group = [v for v in VIEWS if v.rsplit("_", 1)[0] == room and v not in FLASH]      # flash views meter themselves
         metered = {v: math.log2(KEY_TARGET / R.measure_key("Cam_" + v)) for v in group}
         base = min(metered.values())
         for v in group:
@@ -230,8 +238,11 @@ def save():
                "Render Animation writes every view. The stills in out/stills were rendered to scene-linear EXR\n"
                "(out/raw) and developed with apartment/render.py:photo_finish (lens glare, distortion, sensor\n"
                "noise, highlight clipping, JPEG stage). To reproduce: apartment.build.shot(view, 'final').\n"
-               "Assets: Poly Haven (CC0); sofa and dining set from Blender's flat-archiviz demo,\n"
-               "CC-BY Flavio Della Tommasa (malapixel.com).\n")
+               "Assets: Poly Haven (CC0); sofa set from Blender's flat-archiviz demo, CC-BY Flavio Della\n"
+               "Tommasa (malapixel.com); kitchen 'Country Kitchen' by Jay-Artist (CC-BY), bathroom\n"
+               "'Contemporary Bathroom' by Mareck (CC0) and 'Bedroom' by SlykDrako (CC0) via Benedikt\n"
+               "Bitterli's rendering resources; small household objects from Google Research's Scanned\n"
+               "Objects (CC-BY 4.0).\n")
     sc.frame_set(1)
     first = next(iter(VIEWS))
     sc.camera = bpy.data.objects["Cam_" + first]
@@ -257,7 +268,7 @@ def check_floating(tol=0.02, sink=0.06):
     sc = bpy.context.scene
     walls_x = (0.15, 4.14, 4.26, 6.14, 6.26, 7.34, 7.46, 9.85)
     walls_y = (0.15, 4.54, 4.66, 6.54, 6.66, 10.45)
-    skip = ("Scribble", "Curtain", "Sheer", "Blind", "TowelHanging", "Pendant", "Cable", "Light", "Led", "Coat", "ToteBag", "TV",
+    skip = ("SinkCut", "Scribble", "Curtain", "Sheer", "Blind", "TowelHanging", "Pendant", "Cable", "Light", "Led", "Coat", "ToteBag", "TV",
             "Throw", "modern_ceiling_lamp", "Cam_", "Hanging", "Jeans", "Sweater", "Shirt", "WasherTowel", "Cardigan", "Sock")
     rooms = ("Living Room", "Kitchen", "Hallway", "Primary Bedroom", "Home Office", "Bathroom")
     cands = []

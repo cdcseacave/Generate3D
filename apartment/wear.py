@@ -531,9 +531,9 @@ def apply(M):
               (0, 0, 0), rnd.uniform(0.35, 0.55)) for _ in range(7)]
     joint += [((bx1, rnd.uniform(9.8, 10.4), rnd.uniform(0.575, 0.63)), (0.03, rnd.uniform(0.04, 0.1), 0.02), (0, 0, 0), 0.45) for _ in range(3)]
     # (mould patches along the tub joint were removed: at close range they read as decals)
-    scale = [((rnd.uniform(8.95, 9.75), by1, rnd.uniform(0.8, 1.45)), (rnd.uniform(0.006, 0.014), 0.03, rnd.uniform(0.12, 0.3)),
+    scale = [((bx0, rnd.uniform(8.8, 10.3), rnd.uniform(0.7, 1.3)), (0.03, rnd.uniform(0.006, 0.014), rnd.uniform(0.12, 0.3)),
               (0, 0, 0), rnd.uniform(0.3, 0.5)) for _ in range(9)]
-    scale += [((9.35, by1, 0.98), (0.5, 0.05, 0.4), (0, 0, 0), 0.3), ((bx1, 10.0, 0.95), (0.05, 0.4, 0.35), (0, 0, 0), 0.25)]
+    scale += [((bx0, 9.5, 0.95), (0.05, 0.6, 0.4), (0, 0, 0), 0.3)]
     spots(M["wall_bath"], scale, "#cfccc0", "scale", rough=0.62, ragged=0.35, patchy=0.5, fine=40.0)    # limescale where the shower hits
     film(C._MATS.get("ShowerGlass"), 0.16, 26.0)
     film(M["glass"], 0.05, 6.0)

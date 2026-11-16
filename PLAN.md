@@ -73,18 +73,19 @@ projecting 40 mm, exterior ledge.
   throw and shag rug as one group) centred at x≈2.75, y≈2.2 facing the TV, coffee table
   in front of it; armchair south-west; reading chair south-east; shelving on the east
   wall; play mat, toy bin and child's table in the east third.
-- **Kitchen** — L-shaped run: south wall (sink under the window, dishwasher) and east wall
-  (oven/hob with hood); fridge north of the east run; marble-top dining table with six
-  chairs in the middle of the room (centre x≈7.5, y≈2.75) carrying the child's bowl and
-  cup, fruit and the day's clutter.
-- **Primary bedroom** — 1.6 × 2.0 bed with a striped ticking duvet cover, head on the west wall, nightstand each side;
-  1.7 m wardrobe on the south wall; crib and dresser on the east wall; clothes chair by
-  the window.
+- **Kitchen** — fitted kitchen from 'Country Kitchen' (scaled 0.92): cupboard run with range
+  cooker, hood and microwave along the whole east wall, with a sink let into the worktop at
+  its north end; island at x 7.15–8.19, y 2.87–3.63; table with four chairs against the south
+  wall under the window (centre x≈7.44, y≈0.97); fridge on the west wall by the hall opening.
+- **Primary bedroom** — bed (from 'Bedroom') with its head on the west wall and a low bedside
+  table each side; its mirrored wardrobe on the south wall (x 0.85–2.58); crib and scanned
+  dresser on the east wall; clothes chair by the window.
 - **Home office** — 2.0 × 0.92 scanned steel desk under the north window (monitor, keyboard and mouse on the left, laptop and lamp on the right); steel/oak bookshelf and printer
   on the west wall; two-seat sofa on the east wall under a corkboard.
-- **Bathroom** — 1.7 × 0.75 tub along the north wall with screen and hand shower; washing
-  machine in the north-west corner; toilet on the west wall; 0.9 m vanity with mirror
-  cabinet and towel radiator on the east wall.
+- **Bathroom** — from 'Contemporary Bathroom' (widened 3.5 %): wood vanity with two marble
+  basins, long mirror and pendant bulbs on the east wall (y 8.0–10.45); freestanding tub along
+  the west wall (y 8.67–10.36) with a shelf above it; rug between them. Toilet on the west
+  wall at y≈7.75, towel rail on the east wall at y≈7.3.
 
 ## Lighting
 
@@ -118,20 +119,24 @@ Applied last, on top of the finished materials, placed by world position:
 
 ## Cameras and stills
 
-Nine hand-held views at 1.45–1.5 m, 28–35 mm on a 36 mm sensor, held like a phone: the whole
+Thirteen hand-held views at 1.45–1.5 m, 28–35 mm on a 36 mm sensor, held like a phone: the whole
 tilt is real pitch (verticals converge), with up to about 3° of roll.
 
 | Still | Subject | Lens | Light |
 |---|---|---|---|
 | `living_room_01` | armchair, floor lamp, end of the TV cabinet | 35 mm | daylight + floor lamp |
 | `living_room_02` | leather reading chair, plant, curtain by the window | 35 mm | direct sun |
-| `kitchen_01` | fruit bowl, bottles, pot and pan by the hob | 35 mm | daylight |
-| `hallway_01` | entrance door, coat hooks, shoe rack, console | 28 mm | on-camera flash |
+| `kitchen_01` | island, cooker run and the table by the window | 28 mm | daylight |
+| `kitchen_02` | island after breakfast: fruit bowl, cereal box, cocoa, mug and bowl (scanned objects) | 35 mm | daylight |
+| `hallway_01` | console with lamp, frame, vase and basket | 35 mm | console lamp |
 | `hallway_02` | large plant and watering can by the east window | 35 mm | backlit window |
+| `hallway_03` | shoe rack with the family's shoes, rubber boots, school backpack | 35 mm | on-camera flash |
 | `bedroom_01` | bedside table, lamp, clock, charging phone | 35 mm | bedside lamp |
 | `bedroom_02` | worn dresser beside the crib | 28 mm | on-camera flash |
+| `bedroom_03` | bed, mirrored wardrobe, bedside lamp | 28 mm | bedside lamp |
 | `office_01` | lamp end of the scanned steel desk: old laptop, stapler, clipboard, glasses, notepad, mug | 35 mm | direct sun |
-| `bathroom_01` | washer top with cleaners, tub corner with bottles | 35 mm | on-camera flash |
+| `bathroom_01` | tub, stool with bath towel, vanity and window from the door | 28 mm | on-camera flash |
+| `bathroom_02` | marble basin, taps, toothbrushes, child's toothbrush holder, soap dish, hand towel | 35 mm | on-camera flash |
 
 Flash power is metered per view (about 1.7× the ambient reading) and capped so white subjects
 do not blow out. `out/preview_*.png` are diagnostics, `out/raw/*.exr` the scene-linear Cycles
@@ -146,5 +151,33 @@ worst in blind tests.
 - Sofa set and dining set — appended from Blender's official demo scene
   `flat-archiviz.blend`, CC-BY Flavio Della Tommasa (malapixel.com); credit required if the
   renders are published.
-- Everything else (shell, joinery, kitchen, bathroom, bed, soft goods, small props, artwork)
+- Fitted kitchen, bathroom furniture and the bed set — artist-made scenes from Benedikt
+  Bitterli's "Rendering resources" (https://benedikt-bitterli.me/resources/), imported by
+  `apartment/mitsuba.py`: 'Country Kitchen' by Jay-Artist (CC-BY, credit required),
+  'Contemporary Bathroom' by Mareck (CC0), 'Bedroom' by SlykDrako (CC0).
+- Everyday objects that Poly Haven lacks — shoes, backpacks, mugs, bowls, dish drainer, tea
+  towels, cereal and cocoa packs, toys, keyboard and mouse, bath and hand towels, soap dish,
+  toothbrush holder — are photo-scanned products from Google Research's "Scanned Objects"
+  collection, CC-BY 4.0 (credit required), served without an account by Gazebo Fuel
+  (`tools/fetch_gso.py` downloads them, `apartment/gso.py` places them). Each is a real object
+  scanned in metres with a photographic texture; the scripts only add a roughness per kind of
+  surface and mirror a shoe to make its pair.
+- Everything else (shell, joinery, toilet, fridge, sink, coats, a few small props, artwork)
   is generated by the scripts in `apartment/`.
+
+## Fly-through video
+
+`apartment/flythrough.py` runs in its own Blender on the saved scene (no MCP time limit):
+
+    blender -b out/apartment_scene.blend -P apartment/flythrough.py -- plan      # out/flythrough/path.png
+    blender -b out/apartment_scene.blend -P apartment/flythrough.py -- preview   # 640 x 360 EEVEE frames
+    blender -b out/apartment_scene.blend -P apartment/flythrough.py -- final     # 2560 x 1440 Cycles frames
+
+One loop of the hallway at eye height (1.5 m, 18 mm lens, 1 m/s, 24 fps, about 91 s), stepping
+into each room as its door comes up: living room, kitchen, bathroom, office, bedroom. In a room
+the camera circles along the walls with its back to the nearest wall and looks across the
+middle of the room at the far side. The circle is fitted by ray casting, so wardrobes, shelves,
+the fridge, wall cupboards, plants and open door leaves push it inwards; lower furniture is
+flown over. Exposure follows the room, like a phone camera. The final render is resumable
+(existing frames are skipped); encode with
+`ffmpeg -framerate 24 -i out/flythrough/frames/f_%04d.png -c:v libx264 -crf 16 -pix_fmt yuv420p out/flythrough/apartment_2k.mp4`.

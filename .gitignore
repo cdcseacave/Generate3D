@@ -17,3 +17,8 @@ __pycache__/
 *.pyc
 *.blend1
 .DS_Store
+out/flythrough/frames/
+out/flythrough/preview_frames/
+out/apartment_flythrough.blend
+scratch/insp*/
+scratch/gso_sheet.jpg
