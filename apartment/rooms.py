@@ -466,7 +466,7 @@ def bedroom(M):
     X.crib((x1 - 0.38, 9.72, 0), 0.0)
     ph("painted_wooden_cabinet", x1 - 0.33, 8.25, rot=F["W"])
     P.rug("BedRug", 1.15, 1.9, (2.9, 8.6, 0), kind="stripes")
-    chair = ph("dining_chair_02", 2.92, 10.05, rot=0.5)
+    chair = ph("dining_chair_02", 2.92, 9.72, rot=0.5)        # clear of the curtains
     P.ceiling_dome((2.2, 8.6, S.H), power=28, on=False)
     P.laundry_basket((3.82, 7.08, 0), 0.1)
     # walls
@@ -501,9 +501,9 @@ def bedroom(M):
     C.box("BabyMonitor", (0.07, 0.04, 0.11), (dx + 0.12, dy + 0.22, zd), P.PL("#f1f1ee", 0.35), rot=-PI / 2 - 0.3, bevel=0.01)
     # clothes chair
     refresh()
-    zc = Z(2.92, 10.0, 0.7)
-    P.garment("Jeans", 0.5, 0.75, (2.93, 10.02, zc), [chair, bpy.data.objects["Floor_bedroom"]], "#2f3b52", "denim_fabric", rot=0.5)
-    P.towel_hanging((2.8, 10.27, 0.985), "S", 0.38, 0.3, 0.35, "#d8d2c6", gap=0.03, tex="cotton_jersey").rotation_euler[2] = 0.5
+    zc = Z(2.92, 9.67, 0.7)
+    P.garment("Jeans", 0.5, 0.75, (2.93, 9.69, zc), [chair, bpy.data.objects["Floor_bedroom"]], "#2f3b52", "denim_fabric", rot=0.5)
+    P.towel_hanging((2.8, 9.94, 0.985), "S", 0.38, 0.3, 0.35, "#d8d2c6", gap=0.03, tex="cotton_jersey").rotation_euler[2] = 0.5
     # floor
     ph("baseball_01", 3.2, 9.2, 0.014)
     P.picture_book((3.05, 8.95, 0.012), 1.1, 1)

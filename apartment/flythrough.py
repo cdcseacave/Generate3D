@@ -4,7 +4,8 @@
     blender -b out/apartment_scene.blend -P apartment/flythrough.py -- preview
     blender -b out/apartment_scene.blend -P apartment/flythrough.py -- final [first last]
 
-The route is one loop of the hallway, stepping into each room as its door comes up. Inside a
+The route starts at the front door and visits living room, bedroom, kitchen, office and
+bathroom in that order, crossing the hallway between them, then walks back to the door. Inside a
 room the camera circles along the walls, its back to the nearest wall, looking across the
 middle of the room at the far side. The circle is fitted to what is really there: anything
 standing in the camera's height band (wardrobe, shelves, fridge, open door leaves, plants,
@@ -35,8 +36,9 @@ BAND = (1.25, 1.85)         # anything between these heights is in the camera's 
 # metered like the stills; the camera's exposure follows the room it is in
 ROOM_EV = {"living": 3.3, "kitchen": 3.1, "hall": 1.7, "bedroom": 3.2, "office": 3.0, "bath": 1.0}
 # (room, x where the route crosses the wall, wall y, +1 if the room is north of the hall)
-DOORS = [("living", 2.7, S.YH0, -1), ("kitchen", 7.8, S.YH0, -1), ("bath", 8.5, S.YH1, 1),
-         ("office", 5.35, S.YH1, 1), ("bedroom", 2.96, S.YH1, 1)]
+# in visiting order: living room, bedroom across the hall, kitchen, office, bathroom
+DOORS = [("living", 2.7, S.YH0, -1), ("bedroom", 2.96, S.YH1, 1), ("kitchen", 7.8, S.YH0, -1),
+         ("office", 5.35, S.YH1, 1), ("bath", 8.5, S.YH1, 1)]
 
 
 # ------------------------------------------------------------------ free space ---
@@ -85,14 +87,8 @@ def line(a, b, step=0.05):
 
 def route(dg):
     """[(x, y, look_x, look_y, room)] at irregular spacing; look = point the camera faces."""
-    loops = {r: circuit(dg, r) for r in S.ROOMS}
-    hall, hc = loops["hall"]
-    start = nearest(hall, (0.9, (S.YH0 + S.YH1) / 2))          # by the entrance door
-    order = hall[start:] + hall[:start]
-    stops = {}
-    for room, dx, wy, sgn in DOORS:                             # where on the hall loop each door is passed
-        side = [i for i, p in enumerate(order) if (p[1] - hc[1]) * sgn > 0]
-        stops[min(side, key=lambda i: abs(order[i][0] - dx))] = (room, dx, wy, sgn)
+    loops = {r: circuit(dg, r) for r in S.ROOMS if r != "hall"}
+    here = (0.9, (S.YH0 + S.YH1) / 2)                           # just inside the entrance door
     out = []
 
     def across(p, c, room):                                     # look through the middle of the room at the far side
@@ -104,20 +100,17 @@ def route(dg):
             d = (q[0] - p[0], q[1] - p[1]) if q != p else (pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
             out.append((p[0], p[1], p[0] + d[0] * 50, p[1] + d[1] * 50, room))
 
-    for i, p in enumerate(order):
-        across(p, hc, "hall")
-        if i in stops:
-            room, dx, wy, sgn = stops[i]
-            loop, c = loops[room]
-            d_hall, d_room = (dx, wy - sgn * 0.45), (dx, wy + sgn * 0.55)
-            k = nearest(loop, d_room)
-            ahead(line(p, d_hall) + line(d_hall, d_room), "hall")
-            ahead(line(d_room, loop[k]), room)
-            for q in loop[k:] + loop[:k + 1]:
-                across(q, c, room)
-            ahead(line(loop[k], d_room) + line(d_room, d_hall), room)
-            ahead(line(d_hall, p), "hall")
-    across(order[0], hc, "hall")
+    for room, dx, wy, sgn in DOORS:
+        loop, c = loops[room]
+        d_hall, d_room = (dx, wy - sgn * 0.45), (dx, wy + sgn * 0.55)
+        k = nearest(loop, d_room)
+        ahead(line(here, d_hall) + line(d_hall, d_room), "hall")   # along the hall, looking where it goes
+        ahead(line(d_room, loop[k]), room)
+        for q in loop[k:] + loop[:k + 1]:
+            across(q, c, room)
+        ahead(line(loop[k], d_room) + line(d_room, d_hall), room)
+        here = d_hall
+    ahead(line(here, (8.2, 5.6)) + line((8.2, 5.6), (1.6, 5.6)), "hall")   # and back down the hall to the front door
     return out
 
 
@@ -255,7 +248,13 @@ def main():
     else:
         r.engine = "CYCLES"
         cy = sc.cycles
-        cy.samples = int(os.environ.get("FLY_SAMPLES", "160"))
+        prefs = bpy.context.preferences.addons["cycles"].preferences     # a fresh Blender renders on the CPU unless told
+        prefs.compute_device_type = "METAL"
+        prefs.get_devices()
+        for d in prefs.devices:
+            d.use = True
+        cy.device = "GPU"
+        cy.samples = int(os.environ.get("FLY_SAMPLES", "128"))
         cy.use_adaptive_sampling, cy.adaptive_threshold = True, 0.02
         cy.use_denoising = True
         r.use_persistent_data = True                             # keep the scene on the GPU between frames
