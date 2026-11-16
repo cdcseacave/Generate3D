@@ -173,8 +173,9 @@ worst in blind tests.
     blender -b out/apartment_scene.blend -P apartment/flythrough.py -- preview   # 640 x 360 EEVEE frames
     blender -b out/apartment_scene.blend -P apartment/flythrough.py -- final     # 2560 x 1440 Cycles frames
 
-One loop of the hallway at eye height (1.5 m, 18 mm lens, 1 m/s, 24 fps, about 91 s), stepping
-into each room as its door comes up: living room, kitchen, bathroom, office, bedroom. In a room
+From the front door at eye height (1.5 m, 18 mm lens, 1 m/s, 24 fps, 2,220 frames, about 92 s):
+living room, bedroom across the hall, kitchen, office, bathroom, then back down the hall to the
+door. In a room
 the camera circles along the walls with its back to the nearest wall and looks across the
 middle of the room at the far side. The circle is fitted by ray casting, so wardrobes, shelves,
 the fridge, wall cupboards, plants and open door leaves push it inwards; lower furniture is
