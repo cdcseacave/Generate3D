@@ -281,6 +281,20 @@ def main():
         r.filepath = os.path.join(OUT, "frames", "f_")
     if len(argv) >= 3:
         sc.frame_start, sc.frame_end = int(argv[1]), int(argv[2])
+    claim = os.environ.get("FLY_CLAIM")
+    if claim:
+        # sharing the render with another machine: the FLY_CLAIM command hands out one frame at a
+        # time (prints its number, or nothing when none is left) and marks it taken on the other side
+        import subprocess
+        while True:
+            got = subprocess.run(claim, shell=True, capture_output=True, text=True).stdout.strip()
+            if not got.isdigit():
+                print("FLY no frame left to claim", got)
+                return
+            sc.frame_set(int(got))
+            r.filepath = os.path.join(OUT, "frames", "f_{:04d}.png".format(int(got)))
+            print("FLY claimed frame", got, flush=True)
+            bpy.ops.render.render(write_still=True)
     if sys.platform == "darwin":
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT, "out", "apartment_flythrough.blend"), copy=True)
     bpy.ops.render.render(animation=True)
