@@ -220,6 +220,27 @@ def plan(pos):
     bpy.ops.render.render(write_still=True)
 
 
+def gpu():
+    """A fresh Blender renders on the CPU unless told otherwise: pick the platform's GPU backend
+    (Metal on a Mac; OptiX on an RTX card, else CUDA, HIP or oneAPI) and enable only its GPUs."""
+    prefs = bpy.context.preferences.addons["cycles"].preferences
+    order = ["METAL"] if sys.platform == "darwin" else ["OPTIX", "CUDA", "HIP", "ONEAPI"]
+    for kind in order:
+        try:
+            prefs.compute_device_type = kind
+        except TypeError:
+            continue
+        prefs.get_devices()
+        devs = [d for d in prefs.devices if d.type == kind]
+        if not devs or (kind == "OPTIX" and not any("RTX" in d.name for d in devs)):
+            continue
+        for d in prefs.devices:
+            d.use = d.type == kind
+        bpy.context.scene.cycles.device = "GPU"
+        return kind, [d.name for d in devs]
+    return "CPU", []
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else ["plan"]
     mode = argv[0]
@@ -248,12 +269,7 @@ def main():
     else:
         r.engine = "CYCLES"
         cy = sc.cycles
-        prefs = bpy.context.preferences.addons["cycles"].preferences     # a fresh Blender renders on the CPU unless told
-        prefs.compute_device_type = "METAL"
-        prefs.get_devices()
-        for d in prefs.devices:
-            d.use = True
-        cy.device = "GPU"
+        print("FLY device", gpu())
         cy.samples = int(os.environ.get("FLY_SAMPLES", "128"))
         cy.use_adaptive_sampling, cy.adaptive_threshold = True, 0.02
         cy.use_denoising = True
@@ -264,7 +280,8 @@ def main():
         r.filepath = os.path.join(OUT, "frames", "f_")
     if len(argv) >= 3:
         sc.frame_start, sc.frame_end = int(argv[1]), int(argv[2])
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT, "out", "apartment_flythrough.blend"), copy=True)
+    if sys.platform == "darwin":
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT, "out", "apartment_flythrough.blend"), copy=True)
     bpy.ops.render.render(animation=True)
 
 
