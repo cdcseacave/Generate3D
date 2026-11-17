@@ -234,10 +234,11 @@ def gpu():
         devs = [d for d in prefs.devices if d.type == kind]
         if not devs or (kind == "OPTIX" and not any("RTX" in d.name for d in devs)):
             continue
+        hybrid = os.environ.get("FLY_CPU", "1") == "1" and kind != "METAL"   # the CPU joins in as one more device
         for d in prefs.devices:
-            d.use = d.type == kind
+            d.use = d.type == kind or (hybrid and d.type == "CPU")
         bpy.context.scene.cycles.device = "GPU"
-        return kind, [d.name for d in devs]
+        return kind, [d.name for d in prefs.devices if d.use]
     return "CPU", []
 
 
