@@ -34,6 +34,7 @@ LENS = 18.0
 MARGIN = 0.36               # camera to wall or tall furniture
 BAND = (1.25, 1.85)         # anything between these heights is in the camera's way
 # metered like the stills; the camera's exposure follows the room it is in
+ROOM_AT = []
 ROOM_EV = {"living": 3.3, "kitchen": 3.1, "hall": 1.7, "bedroom": 3.2, "office": 3.0, "bath": 1.0}
 # (room, x where the route crosses the wall, wall y, +1 if the room is north of the hall)
 # in visiting order: living room, bedroom across the hall, kitchen, office, bathroom
@@ -146,6 +147,7 @@ def frames(dg):
     look = [(Vector((p[2], p[3])) - Vector((p[0], p[1]))).normalized() for p in res]
     look = [v.normalized() for v in _smooth(look, 0.9 * FPS)]
     ev = _smooth([ROOM_EV[p[4]] for p in res], 0.7 * FPS)
+    ROOM_AT[:] = [p[4] for p in res]                            # room of each frame (index 0 = frame 1)
     return pos, look, ev
 
 
@@ -251,6 +253,8 @@ def main():
     print("FLY frames", len(pos), "seconds", round(len(pos) / FPS, 1))
     if mode == "plan":
         return plan(pos)
+    if mode == "passes":
+        return passes()
     sc.view_settings.view_transform = "AgX"
     r = sc.render
     r.use_overwrite, r.use_placeholder = False, False            # a stopped render picks up where it left off
@@ -298,6 +302,84 @@ def main():
     if sys.platform == "darwin":
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT, "out", "apartment_flythrough.blend"), copy=True)
     bpy.ops.render.render(animation=True)
+
+
+# ------------------------------------------------------------------ passes ---
+def turbo(x):
+    """Google's Turbo colour map (polynomial fit by Anton Mikhailov), x in 0..1 -> RGB 0..1."""
+    import numpy as np
+    x = np.clip(x, 0.0, 1.0)
+    r = 0.13572138 + x * (4.61539260 + x * (-42.66032258 + x * (132.13108234 + x * (-152.94239396 + x * 59.28637943))))
+    g = 0.09140261 + x * (2.19418839 + x * (4.84296658 + x * (-14.18503333 + x * (4.27729857 + x * 2.82956604))))
+    b = 0.10667330 + x * (12.64194608 + x * (-60.58204836 + x * (110.36276771 + x * (-89.90310912 + x * 27.34824973))))
+    return np.clip(np.stack([r, g, b], -1), 0.0, 1.0)
+
+
+def passes():
+    """One frame per room (the middle of the longest stretch spent in it): a depth map in Turbo
+    colours (near = blue, far = red, per-frame range) and an object map (one flat colour per object),
+    from Cycles' Depth and Object Index passes, so alpha cut-outs and glass behave as in the film."""
+    import numpy as np
+    import OpenImageIO as oiio
+    sc = bpy.context.scene
+    r, cy, vl = sc.render, sc.cycles, bpy.context.view_layer
+    pick = {}
+    i = 0
+    while i < len(ROOM_AT):
+        j = i
+        while j < len(ROOM_AT) and ROOM_AT[j] == ROOM_AT[i]:
+            j += 1
+        if j - i > pick.get(ROOM_AT[i], (0, 0))[1]:
+            pick[ROOM_AT[i]] = ((i + j) // 2 + 1, j - i)
+        i = j
+    r.engine = "CYCLES"
+    print("FLY device", gpu())
+    cy.samples, cy.use_adaptive_sampling, cy.use_denoising = 1, False, False
+    cy.max_bounces = cy.diffuse_bounces = cy.glossy_bounces = cy.transmission_bounces = 0
+    r.filter_size = 0.01                                          # one sample, no blending: object edges stay crisp
+    r.resolution_x, r.resolution_y, r.resolution_percentage = 2560, 1440, 100
+    vl.use_pass_z = vl.use_pass_object_index = True
+    for k, o in enumerate(bpy.data.objects, 1):
+        o.pass_index = k
+    try:
+        r.image_settings.media_type = "MULTI_LAYER_IMAGE"              # Blender 5
+        r.image_settings.file_format = "OPEN_EXR"
+    except (AttributeError, TypeError):
+        r.image_settings.file_format = "OPEN_EXR_MULTILAYER"
+    r.image_settings.color_depth = "32"
+    d = os.path.join(OUT, "passes")
+    os.makedirs(d, exist_ok=True)
+    for room, (f, _) in pick.items():
+        sc.frame_set(f)
+        exr = os.path.join(d, "_tmp.exr")
+        r.filepath = exr
+        bpy.ops.render.render(write_still=True)
+        ch = {}
+        for part in range(oiio.ImageBuf(exr).nsubimages):            # each pass may be its own EXR part
+            img = oiio.ImageBuf(exr, part, 0)
+            spec = img.spec()
+            px = img.get_pixels(oiio.FLOAT).reshape(spec.height, spec.width, -1)
+            for k, n in enumerate(spec.channelnames):
+                ch[n] = px[..., k]
+        z = next(v for n, v in ch.items() if n.endswith("Depth.Z"))
+        idx = next(v for n, v in ch.items() if n.endswith(("IndexOB.X", "Object Index.X"))).round().astype(np.int64)
+        hit = (z < 1e5) & (idx > 0)
+        lo, hi = np.percentile(z[hit], 0.5), np.percentile(z[hit], 99.5)
+        dep = turbo((z - lo) / max(hi - lo, 1e-6))
+        dep[~hit] = 0.0
+        h = (idx * 0.6180339887) % 1.0                         # golden-ratio hues: neighbouring ids look different
+        sat = 0.55 + 0.4 * ((idx * 7919) % 5) / 4
+        val = 0.6 + 0.4 * ((idx * 104729) % 3) / 2
+        k6 = (h * 6.0)[..., None]
+        rgb = np.clip(np.abs(((k6 + np.array([0.0, 4.0, 2.0])) % 6.0) - 3.0) - 1.0, 0.0, 1.0)
+        obj = val[..., None] * (1.0 - sat[..., None] + sat[..., None] * rgb)
+        obj[idx <= 0] = 0.0
+        for tag, a in (("depth", dep), ("objects", obj)):
+            out = oiio.ImageBuf(oiio.ImageSpec(spec.width, spec.height, 3, oiio.UINT8))
+            out.set_pixels(oiio.ROI(0, spec.width, 0, spec.height, 0, 1, 0, 3), (a * 255 + 0.5).astype(np.uint8))
+            out.write(os.path.join(d, "{}_f{:04d}_{}.png".format(room, f, tag)))
+        print("FLY passes", room, f, "depth {:.2f}-{:.2f} m".format(lo, hi), "objects", len(np.unique(idx[hit])))
+        os.remove(exr)
 
 
 main()
